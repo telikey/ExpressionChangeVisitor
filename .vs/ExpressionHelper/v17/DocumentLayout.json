@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Admin\\Desktop\\Expression\\ExpressionHelper\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{90B6DC8F-2524-499B-8FA0-4FAE8EA49307}|Test\\Test.csproj|c:\\users\\admin\\desktop\\expression\\expressionhelper\\test\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{90B6DC8F-2524-499B-8FA0-4FAE8EA49307}|Test\\Test.csproj|solutionrelative:test\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B1B10471-536D-40CB-A52A-BC77E037C617}|ExpressionHelper\\ExpressionHelper.csproj|c:\\users\\admin\\desktop\\expression\\expressionhelper\\expressionhelper\\expressiontypevisitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B1B10471-536D-40CB-A52A-BC77E037C617}|ExpressionHelper\\ExpressionHelper.csproj|solutionrelative:expressionhelper\\expressiontypevisitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ExpressionTypeVisitor.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Desktop\\Expression\\ExpressionHelper\\ExpressionHelper\\ExpressionTypeVisitor.cs",
+              "RelativeDocumentMoniker": "ExpressionHelper\\ExpressionTypeVisitor.cs",
+              "ToolTip": "C:\\Users\\Admin\\Desktop\\Expression\\ExpressionHelper\\ExpressionHelper\\ExpressionTypeVisitor.cs",
+              "RelativeToolTip": "ExpressionHelper\\ExpressionTypeVisitor.cs",
+              "ViewState": "AQIAAJgAAAAAAAAAAAAAAKoAAAAMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-22T21:04:56.888Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Desktop\\Expression\\ExpressionHelper\\Test\\Program.cs",
+              "RelativeDocumentMoniker": "Test\\Program.cs",
+              "ToolTip": "C:\\Users\\Admin\\Desktop\\Expression\\ExpressionHelper\\Test\\Program.cs",
+              "RelativeToolTip": "Test\\Program.cs",
+              "ViewState": "AQIAAAgAAAAAAAAAAAAIwDQAAABEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-22T22:23:19.082Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
