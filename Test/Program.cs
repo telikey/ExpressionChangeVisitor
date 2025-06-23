@@ -46,20 +46,15 @@ namespace Test
 
             var visitorParams = new ExpressionChangeVisitorParams()
             {
-                FromType = typeof(TestClassItemFrom),
-                ToType = typeof(TestClassItemTo),
-            };
-
-            var visitorParams2 = new ExpressionChangeVisitorParams()
-            {
-                FromType = typeof(TestClassGroupFrom),
-                ToType = typeof(TestClassGroupTo),
+                TypeChange = new[] {
+                    (From:typeof(TestClassItemFrom),To:typeof(TestClassItemTo)),
+                    (From:typeof(TestClassGroupFrom),To:typeof(TestClassGroupTo))
+                }
             };
 
             var newExp = ExpressionChangeVisitor.Visit(exp, visitorParams);
-            var newExp2 = ExpressionChangeVisitor.Visit(newExp, visitorParams2);
 
-            var compiledExp = (newExp2 as LambdaExpression).Compile(true);
+            var compiledExp = (newExp as LambdaExpression).Compile(true);
             var res = compiledExp.DynamicInvoke(queryItems, queryGroups);
 
             Console.ReadKey();

@@ -9,3 +9,15 @@ C:\Users\Admin\Desktop\Expression\ExpressionHelper\ExpressionHelper\obj\Debug\ne
 C:\Users\Admin\Desktop\Expression\ExpressionHelper\ExpressionHelper\obj\Debug\net8.0\refint\ExpressionHelper.dll
 C:\Users\Admin\Desktop\Expression\ExpressionHelper\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.pdb
 C:\Users\Admin\Desktop\Expression\ExpressionHelper\ExpressionHelper\obj\Debug\net8.0\ref\ExpressionHelper.dll
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\bin\Debug\net8.0\ExpressionHelper.deps.json
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\bin\Debug\net8.0\ExpressionHelper.dll
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\bin\Debug\net8.0\ExpressionHelper.pdb
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.AssemblyInfoInputs.cache
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.AssemblyInfo.cs
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.sourcelink.json
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.dll
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\refint\ExpressionHelper.dll
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ExpressionHelper.pdb
+C:\Users\Admin\Desktop\Expression\ExpressionChangeVisitor\ExpressionHelper\obj\Debug\net8.0\ref\ExpressionHelper.dll

@@ -8,8 +8,7 @@ namespace ExpressionHelper
 {
     public class ExpressionChangeVisitorParams
     {
-        public Type FromType { get; set; }
-        public Type ToType { get; set; }
+        public (Type From, Type To)[] TypeChange { get; set; }
 
         public Func<object?, object?> ConstantChangeFunction { get; set; }
         public Func<MemberInfo?, MemberInfo?> PropertyChangeFunction { get; set; }
@@ -89,7 +88,7 @@ namespace ExpressionHelper
                 return VisitBinary(node, @params);
             }
 
-            throw new Exception("ExpressionTypeVisitor: Can't find nodeType:"+node.Expression.NodeType);
+            throw new Exception("ExpressionChangeVisitor: Can't find nodeType:"+node.Expression.NodeType);
 
         }
 
@@ -293,9 +292,10 @@ namespace ExpressionHelper
 
         private static Type MakeType(Type type, ExpressionChangeVisitorParams @params)
         {
-            if (type?.Name == @params.FromType.Name)
+            var find = @params.TypeChange.FirstOrDefault(x=>x.From.Name==type?.Name);
+            if (find.To!=null)
             {
-                return @params.ToType;
+                return find.To;
             }
 
             if (type?.IsGenericType ?? false)
@@ -313,22 +313,38 @@ namespace ExpressionHelper
         {
             @params.PropertyChangeFunction = (x) =>
             {
-                if (x?.DeclaringType?.Name == @params.FromType.Name)
+                if (x == null)
                 {
-                    var prop = @params.ToType.GetProperty(x.Name);
-                    if (prop != null)
-                    {
-                        return prop;
-                    }
-
-                    var field = @params.ToType.GetField(x.Name);
-
-                    if (prop != null)
-                    {
-                        return prop;
-                    }
+                    return x;
                 }
-                return x;
+
+                var declType = x.DeclaringType;
+
+                if (declType == null)
+                {
+                    return x;
+                }
+
+                var newType = MakeType(declType, @params);
+                if (newType.Name == declType.Name)
+                {
+                    return x;
+                }
+
+                var prop = newType.GetProperty(x.Name);
+                if (prop != null)
+                {
+                    return prop;
+                }
+
+                var field = newType.GetField(x.Name);
+
+                if (prop != null)
+                {
+                    return prop;
+                }
+
+                throw new Exception("ExpressionChangeVisitor: Can't convert member expression" + x +" from type "+x.Name+" to "+newType.Name);
             };
         }
     }
