@@ -32,9 +32,9 @@ namespace Test
         static void Main(string[] args)
         {
             var queryItems = (new[] { 
-                new TestClassItemTo() { Id=1, GroupId = 1 }, 
-                new TestClassItemTo() { Id=2, GroupId = 1 }, 
-                new TestClassItemTo() { Id = 3,GroupId=1 } 
+                new TestClassItemTo() { Id = 1, GroupId = 1 }, 
+                new TestClassItemTo() { Id = 2, GroupId = 1 }, 
+                new TestClassItemTo() { Id = 3, GroupId = 1 } 
             }).AsQueryable();
 
             var queryGroups = (new[] { 

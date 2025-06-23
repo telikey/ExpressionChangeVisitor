@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -8,26 +9,28 @@ namespace ExpressionHelper
 {
     public class ExpressionChangeVisitorParams
     {
-        public (Type From, Type To)[] TypeChange { get; set; }
+        public (Type From, Type To)[] TypeChange { get; set; } = [];
 
-        public Func<object?, object?> ConstantChangeFunction { get; set; }
-        public Func<MemberInfo?, MemberInfo?> PropertyChangeFunction { get; set; }
-    }
-
-    public class ExpressionChangeVisitorVisitReturn
-    {
-        public Expression Expression { get; set; }
-        public List<(Expression From, Expression To)> ChangedParameters { get; set; }
+        public Func<object?, object?> ConstantChangeFunction { get; set; } = (x) => x;
+        public Func<MemberInfo?, MemberInfo?> MemberChangeFunction { get; set; } = (x) => x;
     }
 
     public static class ExpressionChangeVisitor
     {
+        private class ExpressionChangeVisitorVisitReturn
+        {
+            public Expression? Expression { get; set; }
+            public List<(Expression From, Expression To)> ChangedParameters { get; set; } = new List<(Expression From, Expression To)>();
+        }
+
+        [return: NotNullIfNotNull(nameof(node))]
         public static Expression? Visit(Expression? node, ExpressionChangeVisitorParams @params)
         {
             return InternalVisit(node, @params)?.Expression;
         }
 
-        public static ExpressionChangeVisitorVisitReturn? InternalVisit(Expression? node, ExpressionChangeVisitorParams @params)
+        [return: NotNullIfNotNull(nameof(node))]
+        private static ExpressionChangeVisitorVisitReturn? InternalVisit(Expression? node, ExpressionChangeVisitorParams @params)
         {
             if (node == null)
             {
@@ -39,8 +42,7 @@ namespace ExpressionHelper
             return InternalVisit(
                 new ExpressionChangeVisitorVisitReturn()
                 {
-                    Expression = node,
-                    ChangedParameters = new List<(Expression From, Expression To)>()
+                    Expression = node
                 }, @params);
         }
 
@@ -94,33 +96,35 @@ namespace ExpressionHelper
 
         private static ExpressionChangeVisitorVisitReturn VisitMethodCall(ExpressionChangeVisitorVisitReturn nodeArgs, ExpressionChangeVisitorParams @params)
         {
-            var node = nodeArgs.Expression as MethodCallExpression;
-
-            var oldArgs = node.Arguments;
-            var oldMethod = node.Method;
-            var oldObject = node.Object;
-            var newArgs = oldArgs?.Select(x =>
+            if (nodeArgs.Expression is MethodCallExpression node)
             {
-                nodeArgs.Expression = x;
-                return InternalVisit(nodeArgs, @params).Expression;
-            })?.ToArray();
+                var oldArgs = node.Arguments ?? new ReadOnlyCollection<Expression>([]);
+                var oldMethod = node.Method;
+                var oldObject = node.Object;
+                var newArgs = oldArgs?.Select(x =>
+                {
+                    nodeArgs.Expression = x;
+                    return InternalVisit(nodeArgs, @params).Expression;
+                })?.ToArray();
 
-            nodeArgs.Expression = oldObject;
-            var newObject = InternalVisit(nodeArgs, @params).Expression;
+                nodeArgs.Expression = oldObject;
+                var newObject = InternalVisit(nodeArgs, @params).Expression;
 
-            if (oldMethod.IsGenericMethod)
-            {
-                var newMethod = MakeGenericMethod(oldMethod, @params);
-                newArgs = MakeArgsForCall(newArgs, newMethod.GetParameters().Select(x=>x.ParameterType)).ToArray();
-                var newNode = Expression.Call(newObject,newMethod,newArgs);
-                nodeArgs.Expression = newNode;
-                return nodeArgs;
+                if (oldMethod.IsGenericMethod)
+                {
+                    var newMethod = MakeGenericMethod(oldMethod, @params);
+                    newArgs = MakeArgsForCall(newArgs, newMethod.GetParameters().Select(x => x.ParameterType)).ToArray();
+                    var newNode = Expression.Call(newObject, newMethod, newArgs);
+                    nodeArgs.Expression = newNode;
+                    return nodeArgs;
+                }
+                else
+                {
+                    nodeArgs.Expression = node.Update(newObject, newArgs);
+                    return nodeArgs;
+                }
             }
-            else
-            {
-                nodeArgs.Expression = node.Update(newObject, newArgs);
-                return nodeArgs;
-            }
+            return nodeArgs;
         }
 
         private static IEnumerable<Expression> MakeArgsForCall(IEnumerable<Expression> args,IEnumerable<Type> argNeedTypes)
@@ -157,36 +161,42 @@ namespace ExpressionHelper
 
         private static ExpressionChangeVisitorVisitReturn VisitLambda(ExpressionChangeVisitorVisitReturn nodeArgs, ExpressionChangeVisitorParams @params)
         {
-            var node = nodeArgs.Expression as LambdaExpression;
+            if (nodeArgs.Expression is LambdaExpression node)
+            {
+                var oldParams = node.Parameters;
+                var oldBody = node.Body;
 
-            var oldParams = node.Parameters;
-            var oldBody = node.Body;
+                var newParams = oldParams?.Select(x =>
+                {
+                    nodeArgs.Expression = x;
+                    return InternalVisit(nodeArgs, @params).Expression as ParameterExpression;
+                })?.ToArray();
 
-            var newParams = oldParams?.Select(x => {
-                nodeArgs.Expression = x;
-                return InternalVisit(nodeArgs, @params).Expression as ParameterExpression; 
-            })?.ToArray();
+                nodeArgs.Expression = oldBody;
+                var newBody = InternalVisit(nodeArgs, @params).Expression;
 
-            nodeArgs.Expression = oldBody;
-            var newBody = InternalVisit(nodeArgs, @params).Expression;
-
-            nodeArgs.Expression = Expression.Lambda(newBody, node.Name, node.TailCall, newParams);
+                nodeArgs.Expression = Expression.Lambda(newBody, node.Name, node.TailCall, newParams);
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
         private static ExpressionChangeVisitorVisitReturn VisitMember(ExpressionChangeVisitorVisitReturn nodeArgs, ExpressionChangeVisitorParams @params)
         {
-            var node = nodeArgs.Expression as MemberExpression;
+            if (nodeArgs.Expression is MemberExpression node)
+            {
 
-            var oldContaining = node.Expression;
-            var oldMember = node.Member;
+                var oldContaining = node.Expression;
+                var oldMember = node.Member;
 
-            nodeArgs.Expression = oldContaining;
-            var newContaining = InternalVisit(nodeArgs, @params).Expression;
-            var newMember = oldMember;
-            newMember = @params.PropertyChangeFunction(oldMember);
+                nodeArgs.Expression = oldContaining;
+                var newContaining = InternalVisit(nodeArgs, @params).Expression;
+                var newMember = oldMember;
+                newMember = @params.MemberChangeFunction(oldMember);
 
-            nodeArgs.Expression = Expression.MakeMemberAccess(newContaining, newMember);
+                nodeArgs.Expression = Expression.MakeMemberAccess(newContaining, newMember);
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
@@ -199,20 +209,22 @@ namespace ExpressionHelper
                 return nodeArgs;
             }
 
-            var node = nodeArgs.Expression as ParameterExpression;
-
-            var oldType = node.Type;
-            var newType = MakeType(oldType, @params);
-            if (node.IsByRef)
+            if (nodeArgs.Expression is ParameterExpression node)
             {
-                nodeArgs.Expression = Expression.Parameter(newType, node.Name);
-            }
-            else
-            {
-                nodeArgs.Expression = Expression.Variable(newType, node.Name);
-            }
+                var oldType = node.Type;
+                var newType = MakeType(oldType, @params);
+                if (node.IsByRef)
+                {
+                    nodeArgs.Expression = Expression.Parameter(newType, node.Name);
+                }
+                else
+                {
+                    nodeArgs.Expression = Expression.Variable(newType, node.Name);
+                }
 
-            nodeArgs.ChangedParameters.Add((From: node, To: nodeArgs.Expression));
+                nodeArgs.ChangedParameters.Add((From: node, To: nodeArgs.Expression));
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
@@ -225,60 +237,72 @@ namespace ExpressionHelper
                 return nodeArgs;
             }
 
-            var node = nodeArgs.Expression as ConstantExpression;
+            if (nodeArgs.Expression is ConstantExpression node)
+            {
+                var oldValue = node.Value;
+                var newValue = @params.ConstantChangeFunction(node.Value);
 
-            var oldValue = node.Value;
-            var newValue = @params.ConstantChangeFunction(node.Value);
+                nodeArgs.Expression = Expression.Constant(newValue);
+                nodeArgs.ChangedParameters.Add((From: node, To: nodeArgs.Expression));
 
-            nodeArgs.Expression = Expression.Constant(newValue);
-            nodeArgs.ChangedParameters.Add((From: node, To: nodeArgs.Expression));
-
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
         private static ExpressionChangeVisitorVisitReturn VisitBinary(ExpressionChangeVisitorVisitReturn nodeArgs, ExpressionChangeVisitorParams @params)
         {
-            var node = nodeArgs.Expression as BinaryExpression;
+            if (nodeArgs.Expression is BinaryExpression node)
+            {
+                var oldLeft = node.Left;
+                var oldConvertion = node.Conversion;
+                var oldRight = node.Right;
+                var oldMethod = node.Method;
 
-            var oldLeft = node.Left;
-            var oldConvertion = node.Conversion;
-            var oldRight = node.Right;
-            var oldMethod = node.Method;
+                nodeArgs.Expression = oldLeft;
+                var newLeft = InternalVisit(nodeArgs, @params).Expression;
 
-            nodeArgs.Expression = oldLeft;
-            var newLeft = InternalVisit(nodeArgs, @params).Expression;
+                nodeArgs.Expression = oldRight;
+                var newRight = InternalVisit(nodeArgs, @params).Expression;
 
-            nodeArgs.Expression = oldRight;
-            var newRight = InternalVisit(nodeArgs, @params).Expression;
+                nodeArgs.Expression = oldConvertion;
+                var newConversion = InternalVisit(nodeArgs, @params).Expression as LambdaExpression;
+                var newMethod = MakeGenericMethod(oldMethod, @params);
 
-            nodeArgs.Expression = oldConvertion;
-            var newConversion = InternalVisit(nodeArgs, @params).Expression as LambdaExpression;
-            var newMethod = MakeGenericMethod(oldMethod, @params);
-
-            nodeArgs.Expression = Expression.MakeBinary(node.NodeType, newLeft, newRight, node.IsLiftedToNull, newMethod, newConversion);
+                nodeArgs.Expression = Expression.MakeBinary(node.NodeType, newLeft, newRight, node.IsLiftedToNull, newMethod, newConversion);
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
         private static ExpressionChangeVisitorVisitReturn VisitUnary(ExpressionChangeVisitorVisitReturn nodeArgs, ExpressionChangeVisitorParams @params)
         {
-            var node = nodeArgs.Expression as UnaryExpression;
+            if (nodeArgs.Expression is UnaryExpression node)
+            {
+                var oldOperand = node.Operand;
+                var oldMethod = node.Method;
+                var oldType = node.Type;
 
-            var oldOperand = node.Operand;
-            var oldMethod = node.Method;
-            var oldType = node.Type;
+                nodeArgs.Expression = oldOperand;
+                var newOperand = InternalVisit(nodeArgs, @params).Expression;
+                var newMethod = MakeGenericMethod(oldMethod, @params);
+                var newType = node.NodeType == ExpressionType.Quote ? oldType : MakeType(oldType, @params);
 
-            nodeArgs.Expression = oldOperand;
-            var newOperand = InternalVisit(nodeArgs, @params).Expression;
-            var newMethod = MakeGenericMethod(oldMethod, @params);
-            var newType = node.NodeType == ExpressionType.Quote? oldType:MakeType(oldType, @params);
-
-            nodeArgs.Expression = Expression.MakeUnary(node.NodeType, newOperand, newType, newMethod);
+                nodeArgs.Expression = Expression.MakeUnary(node.NodeType, newOperand, newType, newMethod);
+                return nodeArgs;
+            }
             return nodeArgs;
         }
 
-        private static MethodInfo MakeGenericMethod(MethodInfo info, ExpressionChangeVisitorParams @params)
+        [return: NotNullIfNotNull(nameof(info))]
+        private static MethodInfo? MakeGenericMethod(MethodInfo? info, ExpressionChangeVisitorParams @params)
         {
-            if (info?.IsGenericMethod??false)
+            if (info == null)
+            {
+                return info;
+            }
+
+            if (info.IsGenericMethod)
             {
                 var def = info.GetGenericMethodDefinition();
                 var newGenericArgs = info.GetGenericArguments().Select(x =>
@@ -290,15 +314,21 @@ namespace ExpressionHelper
             return info;
         }
 
-        private static Type MakeType(Type type, ExpressionChangeVisitorParams @params)
+        [return: NotNullIfNotNull(nameof(type))]
+        private static Type? MakeType(Type? type, ExpressionChangeVisitorParams @params)
         {
+            if (type == null)
+            {
+                return type;
+            }
+
             var find = @params.TypeChange.FirstOrDefault(x=>x.From.Name==type?.Name);
             if (find.To!=null)
             {
                 return find.To;
             }
 
-            if (type?.IsGenericType ?? false)
+            if (type.IsGenericType)
             {
                 var oldArgs = type.GetGenericArguments();
                 var newArgs = oldArgs.Select(x => MakeType(x, @params)).ToArray();
@@ -309,10 +339,20 @@ namespace ExpressionHelper
             return type;
         }
 
-        private static  void FillDefaultParams(ExpressionChangeVisitorParams @params)
+        private static void FillDefaultParams(ExpressionChangeVisitorParams @params)
         {
-            @params.PropertyChangeFunction = (x) =>
+            var oldMemberChangeFunction = @params.MemberChangeFunction;
+            @params.MemberChangeFunction = (x) =>
             {
+                if (oldMemberChangeFunction != null)
+                {
+                    var newMember = oldMemberChangeFunction(x);
+                    if (newMember != null)
+                    {
+                        return newMember;
+                    }
+                }
+
                 if (x == null)
                 {
                     return x;
