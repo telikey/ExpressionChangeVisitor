@@ -98,7 +98,7 @@ namespace ExpressionHelper
         {
             if (nodeArgs.Expression is MethodCallExpression node)
             {
-                var oldArgs = node.Arguments ?? new ReadOnlyCollection<Expression>([]);
+                var oldArgs = node.Arguments;
                 var oldMethod = node.Method;
                 var oldObject = node.Object;
                 var newArgs = oldArgs?.Select(x =>
@@ -166,7 +166,7 @@ namespace ExpressionHelper
                 var oldParams = node.Parameters;
                 var oldBody = node.Body;
 
-                var newParams = oldParams?.Select(x =>
+                var newParams = oldParams.Select(x =>
                 {
                     nodeArgs.Expression = x;
                     return InternalVisit(nodeArgs, @params).Expression as ParameterExpression;
